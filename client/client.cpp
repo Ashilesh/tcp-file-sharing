@@ -4,6 +4,10 @@
 #include<unistd.h>
 #include<string.h>
 #include<arpa/inet.h>	//inet_pton function
+#include<fstream>
+
+void ls(int);
+void download(int,char[]);
 
 int main(){
 
@@ -11,9 +15,9 @@ int main(){
 
 	struct sockaddr_in serv_addr;
 
-	char msg[1024];
+	char msg[1024]= {0};
 
-	char buffer[1024];
+	char buffer[1024] = {0};
 
 	client_sock = socket(AF_INET, SOCK_STREAM, 0);
 	/*
@@ -76,20 +80,95 @@ int main(){
 	{
 
 		std::cout<<"Client: ";
+		
 		std::cin.getline(msg,sizeof(msg));
-
+		
 		write(client_sock, msg, strlen(msg));
 
-		if(strcmp(msg,"exit") == 0){
+		if(strncmp(msg,"$ls",3) == 0){
+			ls(client_sock);
+		}
+
+		else if(strncmp(msg,"$download",9) == 0){
+			download(client_sock, &msg[10]);
+		}
+
+		else if(strcmp(msg,"exit") == 0){
 			std::cout<<"exiting connection!\n";
 			break;
 		}
 
-		read(client_sock, buffer, 1024);
+		else{
+			read(client_sock, buffer, 1024);
+			buffer[strlen(buffer)] = '\0';
+			std::cout<<"\nServer: "<<buffer;
+		}
 
-		std::cout<<"\nServer: "<<buffer;
+		memset(msg,'\0',strlen(msg));
 
 	}
 
 	return 0;
+}
+
+void ls(int client_sock){
+
+	char buffer[1024] = {0};
+	bool cont = true;
+
+	std::cout<<"--------File------\n";
+
+	while(cont){
+		memset(buffer,'\0',strlen(buffer));
+
+		read(client_sock, buffer, 1024);
+		
+		for(int i = 0 ; i < strlen(buffer); ++i){
+			if(buffer[i] == '#'){
+
+				cont = false;
+				break;
+			}
+			else
+				std::cout<<buffer[i];
+		}
+			
+	}
+}
+
+void download(int client_sock, char file[]){
+
+	std::cout<<"in download"<<std::endl;
+
+	int buffer[1024] = {0}, buffer_counter = 0;
+	std::ofstream fout;
+
+	read(client_sock, buffer, sizeof(buffer));
+
+
+
+	if(buffer[0] == -2)
+		std::cout<<"No File exist!"<<std::endl;
+	else{
+		
+		fout.open(file);
+		std::cout<<"buffer -"<<buffer[0]<<std::endl;
+
+		while(buffer[buffer_counter] != -1){
+
+			std::cout<<buffer[buffer_counter]<<std::endl;
+
+			fout.put((char)buffer[buffer_counter++]);
+
+			if(buffer_counter == 1024){
+				read(client_sock, buffer, sizeof(buffer));
+				buffer_counter = 0;
+			}
+		}
+
+		std::cout<<"file received !"<<std::endl;
+		fout.close();
+	}
+
+
 }

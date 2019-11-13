@@ -2,20 +2,23 @@
 #include<sys/socket.h>
 #include<netinet/in.h>	
 #include<unistd.h>		//read and write function
-#include<string.h>		
+#include<string.h>	
+#include<cstdlib>	
+#include<fstream>		//file handling operation
 
 /*
 	Server has two sockets.
 	1. listening socket.s
 	2. client socket.
 */
-
+void ls(int);
+void download_c(int , char[]);
 
 int main(){
 
 	int serv_fd,opt = 1, client_fd;
 
-	char* msg;
+	char msg[] = "Message received!\n";
 
 	struct sockaddr_in address;
 	//structure for handling internet addresses.
@@ -116,7 +119,13 @@ int main(){
 
 	std::cout<<"Connection established! \n";
 
+
+
 	//Connection between client and server is established at this point.
+
+	memset(buffer,'\0',sizeof(buffer));
+
+
 
 	while(true)
 	// read content send by client and store it into buffer.
@@ -124,29 +133,116 @@ int main(){
 		read(client_fd, buffer, 1024);
 		std::cout<<"Client - "<<buffer<<std::endl;
 
-		for(int i = 0; i < strlen(buffer); i++)
-			std::cout<<(int)buffer[i]<<"-";
-
-		
-
-
-		std::cout<<std::endl;
-
 		if(strcmp(buffer,"exit") == 0){
 			std::cout<<"exiting connection!\n";
 			break;
 		}
+		else if(strncmp(buffer,"$ls",3) == 0){
+			// std::cout<<"List file\n";
+			// system("ls ./download > list.txt");
 
-		msg = (char*)"server acknowledge!\n\0";
-		std::cout<<"above write.";
-		write(client_fd, msg, strlen(msg));
+			// std::ifstream fin;
+			// std::ofstream fout;
+
+			// fin.open("sunrise.jpg");
+			// fout.open("a.jpg", std::ios::out);
+
+			// while(!fin.eof()){
+			// 	if((msg_ch = fin.get()) != -1){
+			// 		fout.put((char)msg_ch);
+			// 		std::cout<<(char)msg_ch;
+			// 	}
+
+			// }
+
+			// std::cout<<std::endl;
+
+			// fin.close();
+			// fout.close();
+			std::cout<<"list called!"<<std::endl;
+			ls(client_fd);
+		}
+		else if(strncmp(buffer,"$upload",7) == 0){
+			std::cout<<"upload";
+			std::cout<<"file -"<<&buffer[8]<<std::endl;
+
+
+		}
+		else if(strncmp(buffer,"$download",9) == 0){
+			download_c(client_fd, &buffer[10]);
+		}
+		else
+			write(client_fd, msg, strlen(msg));
+
 		// send the msg to client.
 		// alternate
 		// send(client_fd, &msg , sizeof(msg), 0)
 
-		memset(buffer,'\0',sizeof(buffer));
+		memset(buffer,'\0',strlen(buffer));
 	}
 
 
 	return 0;
+}
+
+
+void ls(int client_fd){
+	char buffer[1024] = {0};
+
+	system("ls > list.txt");
+
+	std::ifstream fin;
+	fin.open("list.txt");
+
+	while(!fin.eof()){
+		fin.getline(buffer, 1024);
+		buffer[strlen(buffer)] = '\n';
+		std::cout<<buffer<<std::endl;
+		write(client_fd, buffer, strlen(buffer));
+		memset(buffer,'\0',strlen(buffer));
+	}
+
+	char terminate[] = "#";
+
+	write(client_fd, terminate, strlen(terminate));
+
+	fin.close();
+}
+
+void download_c(int client_fd, char file[]){
+
+	int buffer[1024] = {0};
+	int  buf = 0, bufffer_counter = 0;
+	std::ifstream fin;
+
+	// flaw
+	fin.open(file, std::ios::binary);
+
+	if(!fin){
+		buffer[0] = -2;
+		write(client_fd, buffer, sizeof(buffer));
+		std::cout<<"File not found!"<<std::endl;
+	}
+	else{
+		while((buf = fin.get()) != -1 && !fin.eof()){
+			
+			if(bufffer_counter == 1024){
+				write(client_fd, buffer, sizeof(buffer));
+				buffer[0] = buf;
+				bufffer_counter = 1;
+			}
+			else{
+				buffer[bufffer_counter++] = buf;
+			}
+
+			std::cout<<buf<<" ";
+		}
+
+		buffer[bufffer_counter % 1024] = -1;
+
+		write(client_fd, buffer, sizeof(buffer));
+
+		std::cout<<"transmission ended !"<<std::endl;
+	}
+
 }
