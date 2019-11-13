@@ -156,7 +156,7 @@ void download(int client_sock, char file[]){
 
 		while(buffer[buffer_counter] != -1){
 
-			std::cout<<buffer[buffer_counter]<<std::endl;
+			
 
 			fout.put((char)buffer[buffer_counter++]);
 

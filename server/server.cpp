@@ -228,14 +228,13 @@ void download_c(int client_fd, char file[]){
 			
 			if(bufffer_counter == 1024){
 				write(client_fd, buffer, sizeof(buffer));
+				std::cout<<fin.tellg()<<std::endl;
 				buffer[0] = buf;
 				bufffer_counter = 1;
 			}
 			else{
 				buffer[bufffer_counter++] = buf;
 			}
-
-			std::cout<<buf<<" ";
 		}
 
 		buffer[bufffer_counter % 1024] = -1;
