@@ -1,4 +1,3 @@
-a.txt
 list.txt
 server
 server.cpp

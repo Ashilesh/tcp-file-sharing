@@ -2,7 +2,7 @@
 #include<sys/socket.h>
 #include<netinet/in.h>	
 #include<unistd.h>		//read and write function
-#include<string.h>	
+#include<string.h>
 #include<cstdlib>	
 #include<fstream>		//file handling operation
 
@@ -11,8 +11,9 @@
 	1. listening socket.s
 	2. client socket.
 */
-void ls(int);
+void ls(int, char[]);
 void download_c(int , char[]);
+void upload_c(int, char[]);
 
 int main(){
 
@@ -138,45 +139,24 @@ int main(){
 			break;
 		}
 		else if(strncmp(buffer,"$ls",3) == 0){
-			// std::cout<<"List file\n";
-			// system("ls ./download > list.txt");
-
-			// std::ifstream fin;
-			// std::ofstream fout;
-
-			// fin.open("sunrise.jpg");
-			// fout.open("a.jpg", std::ios::out);
-
-			// while(!fin.eof()){
-			// 	if((msg_ch = fin.get()) != -1){
-			// 		fout.put((char)msg_ch);
-			// 		std::cout<<(char)msg_ch;
-			// 	}
-
-			// }
-
-			// std::cout<<std::endl;
-
-			// fin.close();
-			// fout.close();
 			std::cout<<"list called!"<<std::endl;
-			ls(client_fd);
+			ls(client_fd, &buffer[1]);
 		}
 		else if(strncmp(buffer,"$upload",7) == 0){
 			std::cout<<"upload";
 			std::cout<<"file -"<<&buffer[8]<<std::endl;
-
-
+			upload_c(client_fd, &buffer[8]);
 		}
 		else if(strncmp(buffer,"$download",9) == 0){
 			download_c(client_fd, &buffer[10]);
 		}
 		else
+			// send the msg to client.
+			// alternate
+			// send(client_fd, &msg , sizeof(msg), 0)
 			write(client_fd, msg, strlen(msg));
 
-		// send the msg to client.
-		// alternate
-		// send(client_fd, &msg , sizeof(msg), 0)
+		
 
 		memset(buffer,'\0',strlen(buffer));
 	}
@@ -186,10 +166,12 @@ int main(){
 }
 
 
-void ls(int client_fd){
+void ls(int client_fd, char command[]){
 	char buffer[1024] = {0};
 
-	system("ls > list.txt");
+	strcat(command, " > list.txt");
+
+	system(command);
 
 	std::ifstream fin;
 	fin.open("list.txt");
@@ -212,10 +194,9 @@ void ls(int client_fd){
 void download_c(int client_fd, char file[]){
 
 	int buffer[1024] = {0};
-	int  buf = 0, bufffer_counter = 0;
+	int buf = 0, bufffer_counter = 0;
 	std::ifstream fin;
 
-	// flaw
 	fin.open(file, std::ios::binary);
 
 	if(!fin){
@@ -242,6 +223,41 @@ void download_c(int client_fd, char file[]){
 		write(client_fd, buffer, sizeof(buffer));
 
 		std::cout<<"transmission ended !"<<std::endl;
+	}
+
+	fin.close();
+}
+
+void upload_c(int client_sock, char file[]){
+
+	std::cout<<"in upload"<<std::endl;
+
+	int buffer[1024] = {0}, buffer_counter = 0;
+	std::ofstream fout;
+
+	read(client_sock, buffer, sizeof(buffer));
+
+
+
+	if(buffer[0] == -2)
+		std::cout<<"No File exist!"<<std::endl;
+	else{
+		
+		fout.open(file);
+		std::cout<<"buffer -"<<buffer[0]<<std::endl;
+
+		while(buffer[buffer_counter] != -1){
+
+			fout.put((char)buffer[buffer_counter++]);
+
+			if(buffer_counter == 1024){
+				read(client_sock, buffer, sizeof(buffer));
+				buffer_counter = 0;
+			}
+		}
+
+		std::cout<<"file received !"<<std::endl;
+		fout.close();
 	}
 
 }

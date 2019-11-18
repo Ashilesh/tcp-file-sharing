@@ -8,6 +8,7 @@
 
 void ls(int);
 void download(int,char[]);
+void upload(int, char[]);
 
 int main(){
 
@@ -98,6 +99,9 @@ int main(){
 			break;
 		}
 
+		else if(strncmp(msg,"$upload",7) == 0){
+			upload(client_sock, &msg[8]);
+		}
 		else{
 			read(client_sock, buffer, 1024);
 			buffer[strlen(buffer)] = '\0';
@@ -156,8 +160,6 @@ void download(int client_sock, char file[]){
 
 		while(buffer[buffer_counter] != -1){
 
-			
-
 			fout.put((char)buffer[buffer_counter++]);
 
 			if(buffer_counter == 1024){
@@ -171,4 +173,41 @@ void download(int client_sock, char file[]){
 	}
 
 
+}
+
+void upload(int client_fd, char file[]){
+
+	int buffer[1024] = {0};
+	int buf = 0, bufffer_counter = 0;
+	std::ifstream fin;
+
+	fin.open(file, std::ios::binary);
+
+	if(!fin){
+		buffer[0] = -2;
+		write(client_fd, buffer, sizeof(buffer));
+		std::cout<<"File not found!"<<std::endl;
+	}
+	else{
+		while((buf = fin.get()) != -1 && !fin.eof()){
+			
+			if(bufffer_counter == 1024){
+				write(client_fd, buffer, sizeof(buffer));
+				
+				buffer[0] = buf;
+				bufffer_counter = 1;
+			}
+			else{
+				buffer[bufffer_counter++] = buf;
+			}
+		}
+
+		buffer[bufffer_counter % 1024] = -1;
+
+		write(client_fd, buffer, sizeof(buffer));
+
+		std::cout<<"transmission ended !"<<std::endl;
+	}
+
+	fin.close();
 }
