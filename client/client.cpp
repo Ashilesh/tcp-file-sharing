@@ -144,7 +144,7 @@ void download(int client_sock, char file[]){
 
 	std::cout<<"in download"<<std::endl;
 
-	int buffer[1024] = {0}, buffer_counter = 0;
+	int buffer[1024] = {0}, buffer_counter = 0, buf_2 = 100;
 	std::ofstream fout;
 
 	read(client_sock, buffer, sizeof(buffer));
@@ -162,8 +162,17 @@ void download(int client_sock, char file[]){
 
 			fout.put((char)buffer[buffer_counter++]);
 
+			std::cout<<"buffer_counter :"<<buffer_counter<<std::endl;
+
 			if(buffer_counter == 1024){
+
+				write(client_sock, &buf_2, sizeof(buf_2));
+
 				read(client_sock, buffer, sizeof(buffer));
+
+				std::cout<<"between read and write"<<std::endl;
+				
+				
 				buffer_counter = 0;
 			}
 		}

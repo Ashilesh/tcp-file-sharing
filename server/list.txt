@@ -1,3 +1,5 @@
+a.txt
+ganpati.jpg
 list.txt
 server
 server.cpp

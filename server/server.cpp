@@ -194,7 +194,7 @@ void ls(int client_fd, char command[]){
 void download_c(int client_fd, char file[]){
 
 	int buffer[1024] = {0};
-	int buf = 0, bufffer_counter = 0;
+	int buf = 0, bufffer_counter = 0, buf_2;
 	std::ifstream fin;
 
 	fin.open(file, std::ios::binary);
@@ -209,7 +209,15 @@ void download_c(int client_fd, char file[]){
 			
 			if(bufffer_counter == 1024){
 				write(client_fd, buffer, sizeof(buffer));
+
+				std::cout<<"between write and read"<<std::endl;
+				
+				read(client_fd, &buf_2, sizeof(buf_2));
+
+				std::cout<<" buf_2 : "<<buf_2<<std::endl;
+
 				std::cout<<fin.tellg()<<std::endl;
+
 				buffer[0] = buf;
 				bufffer_counter = 1;
 			}
@@ -221,6 +229,8 @@ void download_c(int client_fd, char file[]){
 		buffer[bufffer_counter % 1024] = -1;
 
 		write(client_fd, buffer, sizeof(buffer));
+
+		
 
 		std::cout<<"transmission ended !"<<std::endl;
 	}
