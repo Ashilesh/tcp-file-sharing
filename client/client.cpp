@@ -95,7 +95,14 @@ int main(){
 		}
 
 		else if(strcmp(msg,"exit") == 0){
-			std::cout<<"exiting connection!\n";
+
+			std::cout<<"start"<<std::endl;
+			char a[3] = {100,-1,101};
+			int i = 0;
+			while(a[i] != -1)
+				std::cout<<a[i++]<<"for00 "<<std::endl;
+
+			std::cout<<"exiting connection!\n"<<std::endl;
 			break;
 		}
 
@@ -144,7 +151,11 @@ void download(int client_sock, char file[]){
 
 	std::cout<<"in download"<<std::endl;
 
-	int buffer[1024] = {0}, buffer_counter = 0, buf_2 = 100;
+	// int buffer[1024] = {0}, 
+	int buffer_counter = 0, buf_2 = 100;
+	
+	char buffer[1024] = {0};
+
 	std::ofstream fout;
 
 	read(client_sock, buffer, sizeof(buffer));
@@ -158,13 +169,13 @@ void download(int client_sock, char file[]){
 		fout.open(file);
 		std::cout<<"buffer -"<<buffer[0]<<std::endl;
 
-		while(buffer[buffer_counter] != -1){
+		while(buffer[1023] != 'y'){
 
 			fout.put((char)buffer[buffer_counter++]);
 
-			std::cout<<"buffer_counter :"<<buffer_counter<<std::endl;
+			std::cout<<"data :"<<buffer[buffer_counter]<<std::endl;
 
-			if(buffer_counter == 1024){
+			if(buffer_counter == 1023){
 
 				write(client_sock, &buf_2, sizeof(buf_2));
 
@@ -176,6 +187,13 @@ void download(int client_sock, char file[]){
 				buffer_counter = 0;
 			}
 		}
+
+		while(buffer[buffer_counter] != 'P'){
+			std::cout<<(int)buffer[buffer_counter]<<"-----"<<std::endl;
+			fout.put((char)buffer[buffer_counter++]);
+		}
+
+		std::cout<<(int)buffer[buffer_counter]<<" this"<<std::endl;
 
 		std::cout<<"file received !"<<std::endl;
 		fout.close();

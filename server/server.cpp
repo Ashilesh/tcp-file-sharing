@@ -193,8 +193,11 @@ void ls(int client_fd, char command[]){
 
 void download_c(int client_fd, char file[]){
 
-	int buffer[1024] = {0};
-	int buf = 0, bufffer_counter = 0, buf_2;
+	// int buffer[1024] = {0};
+
+	char buffer[1024] = {0};
+
+	int buf = 0, buffer_counter = 0, buf_2;
 	std::ifstream fin;
 
 	fin.open(file, std::ios::binary);
@@ -205,9 +208,12 @@ void download_c(int client_fd, char file[]){
 		std::cout<<"File not found!"<<std::endl;
 	}
 	else{
-		while((buf = fin.get()) != -1 && !fin.eof()){
+		while((buf = fin.get()) != -1){
 			
-			if(bufffer_counter == 1024){
+			if(buffer_counter == 1023){
+
+				buffer[buffer_counter] = 'n';
+
 				write(client_fd, buffer, sizeof(buffer));
 
 				std::cout<<"between write and read"<<std::endl;
@@ -219,14 +225,17 @@ void download_c(int client_fd, char file[]){
 				std::cout<<fin.tellg()<<std::endl;
 
 				buffer[0] = buf;
-				bufffer_counter = 1;
+				buffer_counter = 1;
 			}
 			else{
-				buffer[bufffer_counter++] = buf;
+				buffer[buffer_counter++] = (char)buf;
 			}
 		}
 
-		buffer[bufffer_counter % 1024] = -1;
+		buffer[1023] = 'y';
+
+		std::cout<<"value of buf counter :"<<(int)buffer[2]<<" "<<buffer_counter<<std::endl;
+		buffer[buffer_counter % 1023] = 'P';
 
 		write(client_fd, buffer, sizeof(buffer));
 
