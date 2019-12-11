@@ -208,6 +208,7 @@ void download_c(int client_fd, char file[]){
 		std::cout<<"File not found!"<<std::endl;
 	}
 	else{
+
 		while((buf = fin.get()) != -1){
 			
 			if(buffer_counter == 1023){
@@ -216,13 +217,13 @@ void download_c(int client_fd, char file[]){
 
 				write(client_fd, buffer, sizeof(buffer));
 
-				std::cout<<"between write and read"<<std::endl;
+				// std::cout<<"between write and read"<<std::endl;
 				
 				read(client_fd, &buf_2, sizeof(buf_2));
 
-				std::cout<<" buf_2 : "<<buf_2<<std::endl;
+				// std::cout<<" buf_2 : "<<buf_2<<std::endl;
 
-				std::cout<<fin.tellg()<<std::endl;
+				std::cout<<fin.tellg()<<std::endl;				
 
 				buffer[0] = buf;
 				buffer_counter = 1;
@@ -233,9 +234,18 @@ void download_c(int client_fd, char file[]){
 		}
 
 		buffer[1023] = 'y';
+		
+		if(buffer_counter != 1024)
+			buffer[buffer_counter++] = 'E';
+			
+		if(buffer_counter != 1024)
+			buffer[buffer_counter++] = 'N';
+		
+		if(buffer_counter != 1024)
+			buffer[buffer_counter++] = 'D';
 
-		std::cout<<"value of buf counter :"<<(int)buffer[2]<<" "<<buffer_counter<<std::endl;
-		buffer[buffer_counter % 1023] = 'P';
+		std::cout<<buffer[1023]<<std::endl;
+		
 
 		write(client_fd, buffer, sizeof(buffer));
 

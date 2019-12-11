@@ -95,13 +95,6 @@ int main(){
 		}
 
 		else if(strcmp(msg,"exit") == 0){
-
-			std::cout<<"start"<<std::endl;
-			char a[3] = {100,-1,101};
-			int i = 0;
-			while(a[i] != -1)
-				std::cout<<a[i++]<<"for00 "<<std::endl;
-
 			std::cout<<"exiting connection!\n"<<std::endl;
 			break;
 		}
@@ -152,9 +145,9 @@ void download(int client_sock, char file[]){
 	std::cout<<"in download"<<std::endl;
 
 	// int buffer[1024] = {0}, 
-	int buffer_counter = 0, buf_2 = 100;
+	int buffer_counter = 0, buf_2 = 100, end_byte;
 	
-	char buffer[1024] = {0};
+	char buffer[1024] = {0}, search[] = "END";
 
 	std::ofstream fout;
 
@@ -167,13 +160,12 @@ void download(int client_sock, char file[]){
 	else{
 		
 		fout.open(file);
-		std::cout<<"buffer -"<<buffer[0]<<std::endl;
 
-		while(buffer[1023] != 'y'){
+		while(buffer[1023] == 'n'){
 
 			fout.put((char)buffer[buffer_counter++]);
 
-			std::cout<<"data :"<<buffer[buffer_counter]<<std::endl;
+			// std::cout<<"data :"<<buffer[buffer_counter]<<std::endl;
 
 			if(buffer_counter == 1023){
 
@@ -181,15 +173,47 @@ void download(int client_sock, char file[]){
 
 				read(client_sock, buffer, sizeof(buffer));
 
-				std::cout<<"between read and write"<<std::endl;
-				
+				// std::cout<<"between read and write"<<std::endl;
 				
 				buffer_counter = 0;
 			}
 		}
 
-		while(buffer[buffer_counter] != 'P'){
-			std::cout<<(int)buffer[buffer_counter]<<"-----"<<std::endl;
+		if(buffer[1023] == 'E')
+			end_byte = 1022;
+
+		else if(buffer[1023] == 'N')
+			end_byte = 1021;
+
+		else if(buffer[1023] == 'D')
+			end_byte = 1020;
+
+		else{
+			//need to imporove this
+			bool cont = true;
+			int i;
+
+			while(cont){
+
+				if(buffer[buffer_counter++] == 'E'){
+					
+					end_byte = buffer_counter - 1;
+
+					for(i = 1 ; i < 3 && search[i] == buffer[buffer_counter++] ; i++);
+
+					if(i == 3)
+						cont = false;
+				}
+			}
+
+			buffer_counter = 0;
+		}
+
+		if(end_byte == -1)
+			end_byte++;
+
+		while(buffer_counter != end_byte){
+			
 			fout.put((char)buffer[buffer_counter++]);
 		}
 
