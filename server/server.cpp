@@ -145,7 +145,15 @@ int main(){
 		else if(strncmp(buffer,"$upload",7) == 0){
 			std::cout<<"upload";
 			std::cout<<"file -"<<&buffer[8]<<std::endl;
-			upload_c(client_fd, &buffer[8]);
+
+			int loc = 7;
+			for(int i = 0 ; buffer[i] != -1 ; i++)
+				if(buffer[i] == '/')
+					loc = i;
+
+			std::cout<<"location : "<<loc<<std::endl;
+
+			upload_c(client_fd, &buffer[++loc]);
 		}
 		else if(strncmp(buffer,"$download",9) == 0){
 			download_c(client_fd, &buffer[10]);
@@ -192,8 +200,6 @@ void ls(int client_fd, char command[]){
 }
 
 void download_c(int client_fd, char file[]){
-
-	// int buffer[1024] = {0};
 
 	char buffer[1024] = {0};
 
@@ -259,9 +265,14 @@ void download_c(int client_fd, char file[]){
 
 void upload_c(int client_sock, char file[]){
 
-	std::cout<<"in upload"<<std::endl;
+	std::cout<<"in upload command of client i.e. server downloading"<<std::endl;
 
-	int buffer[1024] = {0}, buffer_counter = 0;
+	std::cout<<file<<" file"<<std::endl;
+	// int buffer[1024] = {0}, 
+	int buffer_counter = 0, buf_2 = 100, end_byte;
+	
+	char buffer[1024] = {0}, search[] = "END";
+
 	std::ofstream fout;
 
 	read(client_sock, buffer, sizeof(buffer));
@@ -273,20 +284,69 @@ void upload_c(int client_sock, char file[]){
 	else{
 		
 		fout.open(file);
-		std::cout<<"buffer -"<<buffer[0]<<std::endl;
 
-		while(buffer[buffer_counter] != -1){
+		while(buffer[1023] == 'n'){
 
 			fout.put((char)buffer[buffer_counter++]);
 
-			if(buffer_counter == 1024){
+			// std::cout<<"data :"<<buffer[buffer_counter]<<std::endl;
+
+			if(buffer_counter == 1023){
+
+				write(client_sock, &buf_2, sizeof(buf_2));
+
 				read(client_sock, buffer, sizeof(buffer));
+
+				// std::cout<<"between read and write"<<std::endl;
+				
 				buffer_counter = 0;
 			}
 		}
 
+		if(buffer[1023] == 'E')
+			end_byte = 1022;
+
+		else if(buffer[1023] == 'N')
+			end_byte = 1021;
+
+		else if(buffer[1023] == 'D')
+			end_byte = 1020;
+
+		else{
+			//need to imporove this
+			bool cont = true;
+			int i;
+
+			while(cont){
+
+				if(buffer[buffer_counter++] == 'E'){
+					
+					end_byte = buffer_counter - 1;
+
+					for(i = 1 ; i < 3 && search[i] == buffer[buffer_counter++] ; i++);
+
+					if(i == 3)
+						cont = false;
+				}
+			}
+
+			buffer_counter = 0;
+		}
+
+		if(end_byte == -1)
+			end_byte++;
+
+		while(buffer_counter != end_byte){
+			
+			fout.put((char)buffer[buffer_counter++]);
+		}
+
+		std::cout<<(int)buffer[buffer_counter]<<" this"<<std::endl;
+
 		std::cout<<"file received !"<<std::endl;
 		fout.close();
 	}
+
+
 
 }

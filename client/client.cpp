@@ -9,8 +9,11 @@
 void ls(int);
 void download(int,char[]);
 void upload(int, char[]);
+void how_to_use();
 
 int main(){
+
+	how_to_use();
 
 	int client_sock;
 
@@ -91,7 +94,13 @@ int main(){
 		}
 
 		else if(strncmp(msg,"$download",9) == 0){
-			download(client_sock, &msg[10]);
+
+			int loc = 9;
+			for(int i = 0 ; msg[i] != -1 ; i++)
+				if(msg[i] == '/')
+					loc = i;
+
+			download(client_sock, &msg[++loc]);
 		}
 
 		else if(strcmp(msg,"exit") == 0){
@@ -158,6 +167,8 @@ void download(int client_sock, char file[]){
 	if(buffer[0] == -2)
 		std::cout<<"No File exist!"<<std::endl;
 	else{
+
+		std::cout<<file<<" file name"<<std::endl;
 		
 		fout.open(file);
 
@@ -228,8 +239,9 @@ void download(int client_sock, char file[]){
 
 void upload(int client_fd, char file[]){
 
-	int buffer[1024] = {0};
-	int buf = 0, bufffer_counter = 0;
+	char buffer[1024] = {0};
+
+	int buf = 0, buffer_counter = 0, buf_2;
 	std::ifstream fin;
 
 	fin.open(file, std::ios::binary);
@@ -240,25 +252,62 @@ void upload(int client_fd, char file[]){
 		std::cout<<"File not found!"<<std::endl;
 	}
 	else{
-		while((buf = fin.get()) != -1 && !fin.eof()){
+
+		while((buf = fin.get()) != -1){
 			
-			if(bufffer_counter == 1024){
+			if(buffer_counter == 1023){
+
+				buffer[buffer_counter] = 'n';
+
 				write(client_fd, buffer, sizeof(buffer));
+
+				// std::cout<<"between write and read"<<std::endl;
 				
+				read(client_fd, &buf_2, sizeof(buf_2));
+
+				// std::cout<<" buf_2 : "<<buf_2<<std::endl;
+
+				std::cout<<fin.tellg()<<std::endl;				
+
 				buffer[0] = buf;
-				bufffer_counter = 1;
+				buffer_counter = 1;
 			}
 			else{
-				buffer[bufffer_counter++] = buf;
+				buffer[buffer_counter++] = (char)buf;
 			}
 		}
 
-		buffer[bufffer_counter % 1024] = -1;
+		buffer[1023] = 'y';
+		
+		if(buffer_counter != 1024)
+			buffer[buffer_counter++] = 'E';
+			
+		if(buffer_counter != 1024)
+			buffer[buffer_counter++] = 'N';
+		
+		if(buffer_counter != 1024)
+			buffer[buffer_counter++] = 'D';
+
+		std::cout<<buffer[1023]<<std::endl;
+		
 
 		write(client_fd, buffer, sizeof(buffer));
+
+		
 
 		std::cout<<"transmission ended !"<<std::endl;
 	}
 
 	fin.close();
+}
+
+void how_to_use(){
+	std::cout<<"---------------------------------------------------------------------"<<std::endl;
+	std::cout<<"\nThis program helps you to transfer file between client and server i.e between two PC's."<<std::endl;
+	std::cout<<"\nUsage-\n\tYou can use $ls, $download and $upload commands for listing, downloading and uploading files."<<std::endl;
+	std::cout<<"\n$ls [path]\n\tIt will give the list of files in server."<<std::endl;
+	std::cout<<"\n$download [path]\n\tIt will download the files from given path from server."<<std::endl;
+	std::cout<<"\n$upload [path]\n\tIt will upload file from client PC to server."<<std::endl;
+	std::cout<<"Note: [path] refer in upload command is our local path."<<std::endl;
+	std::cout<<"---------------------------------------------------------------------\n"<<std::endl;
 }
